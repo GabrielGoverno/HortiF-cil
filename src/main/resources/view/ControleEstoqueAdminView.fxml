@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.hortifacil.controller.ControleEstoqueAdminController"
+      spacing="20" alignment="TOP_CENTER" prefWidth="1000" prefHeight="700"
+      styleClass="root-pane"
+      stylesheets="@/css/style.css">
+
+    <Label text="Controle de Estoque - Admin" styleClass="title-label"/>
+
+    <HBox spacing="15" alignment="CENTER_LEFT" prefWidth="900">
+        <ComboBox fx:id="cbProduto" prefWidth="300" promptText="Selecionar Produto"/>
+        <TextField fx:id="txtQuantidade" promptText="Quantidade" prefWidth="120"/>
+        <DatePicker fx:id="dpDataColhido" promptText="Data Colhido" prefWidth="180"/>
+        <DatePicker fx:id="dpDataValidade" promptText="Data vencimento" prefWidth="180" />
+    </HBox>
+
+    <HBox alignment="CENTER_RIGHT" prefWidth="900" >
+        <Button fx:id="btnAdicionar" text="Adicionar Produto" prefWidth="180" styleClass="button-green"/>
+    </HBox>
+
+    <Label fx:id="lblInfo" styleClass="error-label" wrapText="true" maxWidth="900"/>
+
+    <ListView fx:id="lvEstoque" prefWidth="950" prefHeight="450"/>
+
+    <HBox alignment="CENTER_RIGHT" prefWidth="950" >
+        <Button fx:id="btnVoltarHome" text="Voltar" prefWidth="120" styleClass="button-exit"/>
+    </HBox>
+
+</VBox>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.hortifacil.controller.PedidoFinalizadoController"
+      spacing="15" alignment="CENTER" padding="20">
+
+    <!-- Título -->
+    <Label text="Pedido Confirmado!" style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
+
+    <!-- Loading Spinner -->
+    <ProgressIndicator fx:id="progressIndicator" visible="true" />
+
+    <!-- Container dos dados do pedido, escondido inicialmente -->
+    <VBox fx:id="dadosPedidoContainer" visible="false" spacing="10" maxWidth="400">
+
+        <Label fx:id="lblNumeroPedido" style="-fx-font-size: 16px;"/>
+        <Label fx:id="lblDataPedido" style="-fx-font-size: 14px;"/>
+
+        <TableView fx:id="tabelaProdutos" prefHeight="200">
+            <columns>
+                <TableColumn text="Produto" fx:id="colProduto" prefWidth="150"/>
+                <TableColumn text="Quantidade" fx:id="colQuantidade" prefWidth="100"/>
+                <TableColumn text="Preço Unit." fx:id="colPreco" prefWidth="100"/>
+                <TableColumn text="Subtotal" fx:id="colSubtotal" prefWidth="100"/>
+            </columns>
+        </TableView>
+
+        <Label fx:id="lblTotalPedido" style="-fx-font-size: 16px; -fx-font-weight: bold;"/>
+
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button text="Voltar à Loja" onAction="#voltarALoja"/>
+            <Button text="Ver Meus Pedidos" onAction="#verMeusPedidos"/>
+        </HBox>
+    </VBox>
+
+</VBox>

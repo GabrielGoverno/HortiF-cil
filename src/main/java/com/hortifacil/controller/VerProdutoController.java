@@ -8,7 +8,7 @@ import com.hortifacil.dao.ProdutoEstoqueDAOImpl;
 import com.hortifacil.database.DatabaseConnection;
 import com.hortifacil.model.CarrinhoProduto;
 import com.hortifacil.model.Produto;
-import com.hortifacil.model.ProdutoEstoque;
+import com.hortifacil.model.ProdutoQuantidadeTotal;
 import com.hortifacil.service.EstoqueService;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -35,7 +35,8 @@ public class VerProdutoController {
         try {
             var conn = DatabaseConnection.getConnection();
             ProdutoDAO produtoDAO = new ProdutoDAOImpl(conn);
-            ProdutoEstoqueDAO produtoEstoqueDAO = new ProdutoEstoqueDAOImpl(conn);
+            ProdutoEstoqueDAO produtoEstoqueDAO = new ProdutoEstoqueDAOImpl(conn, produtoDAO);
+
             estoqueService = EstoqueService.getInstance(produtoDAO, produtoEstoqueDAO);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -50,19 +51,19 @@ public class VerProdutoController {
     }
 
     private void carregarProdutosDoEstoque() {
-        produtosContainer.getChildren().clear();
+    produtosContainer.getChildren().clear();
 
-        List<ProdutoEstoque> produtosEstoque = estoqueService.listarEstoque();
+    try {
+        List<ProdutoQuantidadeTotal> produtosComQtdTotal = estoqueService.listarProdutosComQuantidadeTotalAgrupada();
 
-        for (ProdutoEstoque pEstoque : produtosEstoque) {
+        for (ProdutoQuantidadeTotal pqt : produtosComQtdTotal) {
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/ProdutoCardView.fxml"));
                 VBox card = loader.load();
 
                 ProdutoCardController controller = loader.getController();
-                controller.setProduto(pEstoque.getProduto());
-                controller.setListener((produto, quantidade) -> adicionarAoCarrinho(produto, quantidade));
-
+                controller.setProdutoQuantidadeDisponivel(pqt.getProduto(), (int) pqt.getQuantidadeTotal());
+                controller.setListener((produto, quantidade) -> adicionarAoCarrinho(produto, quantidade, clienteId));
 
                 produtosContainer.getChildren().add(card);
 
@@ -71,16 +72,29 @@ public class VerProdutoController {
                 e.printStackTrace();
             }
         }
-    }
 
-private void adicionarAoCarrinho(Produto produto, int quantidade) {
+    } catch (SQLException e) {
+        e.printStackTrace();
+        System.err.println("Erro ao carregar produtos do estoque: " + e.getMessage());
+    }
+}
+
+private void adicionarAoCarrinho(Produto produto, int quantidade, int clienteId) {
     try {
         var conn = DatabaseConnection.getConnection();
         var carrinhoProdutoDAO = new CarrinhoProdutoDAOImpl(conn);
 
-        carrinhoProdutoDAO.adicionarAoCarrinho(
-            new CarrinhoProduto(clienteId, produto, quantidade, produto.getPreco())
+        int idCarrinho = carrinhoProdutoDAO.obterOuCriarCarrinhoAberto(clienteId);
+
+        CarrinhoProduto item = new CarrinhoProduto(
+            idCarrinho,
+            clienteId,
+            produto,
+            quantidade,
+            produto.getPreco()
         );
+
+        carrinhoProdutoDAO.adicionarAoCarrinho(item);
 
         System.out.println(produto.getNome() + " adicionado ao carrinho! Qtd: " + quantidade);
 

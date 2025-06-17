@@ -21,7 +21,7 @@ import java.sql.Connection;
 
 public class CadastroClienteController {
 
-    @FXML private TextField loginField;
+    @FXML private TextField LoginField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmaSenhaField;
     @FXML private TextField nomeField;
@@ -43,7 +43,7 @@ public void initialize() {
 
     ChangeListener<String> listener = (obs, oldVal, newVal) -> validarFormulario();
 
-    loginField.textProperty().addListener(listener);
+    LoginField.textProperty().addListener(listener);
     passwordField.textProperty().addListener(listener);
     confirmaSenhaField.textProperty().addListener(listener);
     nomeField.textProperty().addListener(listener);
@@ -54,9 +54,8 @@ public void initialize() {
     bairroField.textProperty().addListener(listener);
     telefoneField.textProperty().addListener(listener);
 
-    aplicarMascaraTelefone(); // ← Chama aqui
+    aplicarMascaraTelefone();
 
-    // Validação de senha
     confirmaSenhaField.textProperty().addListener((obs, oldV, newV) -> {
         if (!newV.equals(passwordField.getText())) {
             confirmaSenhaField.setStyle("-fx-border-color: red;");
@@ -65,7 +64,6 @@ public void initialize() {
         }
     });
 
-        // Validar confirmação de senha enquanto digita
         confirmaSenhaField.textProperty().addListener((obs, oldV, newV) -> {
             if (!newV.equals(passwordField.getText())) {
                 confirmaSenhaField.setStyle("-fx-border-color: red;");
@@ -74,7 +72,6 @@ public void initialize() {
             }
         });
 
-        // Validar senha força básica
         passwordField.textProperty().addListener((obs, oldV, newV) -> {
             if (newV.length() < 6) {
                 passwordField.setStyle("-fx-border-color: red;");
@@ -85,7 +82,6 @@ public void initialize() {
             }
         });
 
-        // Máscara simples para CPF: permite só números, limita a 11
    cpfField.textProperty().addListener((obs, oldVal, newVal) -> {
     String digits = newVal.replaceAll("[^\\d]", "");
     if (digits.length() > 11) digits = digits.substring(0, 11);
@@ -157,10 +153,10 @@ private void aplicarMascaraTelefone() {
 }
 
     private void validarFormulario() {
-        // Reset mensagem
+
         setMensagemErro("");
 
-        boolean todosPreenchidos = !loginField.getText().trim().isEmpty()
+        boolean todosPreenchidos = !LoginField.getText().trim().isEmpty()
                 && !passwordField.getText().trim().isEmpty()
                 && !confirmaSenhaField.getText().trim().isEmpty()
                 && !nomeField.getText().trim().isEmpty()
@@ -192,7 +188,6 @@ private void aplicarMascaraTelefone() {
             confirmaSenhaField.setStyle(null);
         }
 
-        // Validação de e-mail (simples): deve conter "@" e "."
         String email = emailField.getText().trim();
         boolean emailValido = email.matches("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
 
@@ -211,7 +206,7 @@ private void handleCadastrar() {
     cadastrarButton.setDisable(true);
     try (Connection conn = DatabaseConnection.getConnection()) {
         Cliente cliente = new Cliente();
-        cliente.setlogin(loginField.getText());
+        cliente.setLogin(LoginField.getText());
         cliente.setSenha(passwordField.getText());
         cliente.setTipo(Enums.TipoUsuario.CLIENTE);
         cliente.setStatus(Enums.StatusUsuario.ATIVO);
@@ -222,7 +217,7 @@ private void handleCadastrar() {
         cliente.setTelefone(telefoneField.getText());
 
         ClienteDAO clienteDAO = new ClienteDAO(conn);
-        int idCliente = clienteDAO.inserirClienteCompleto(cliente); // ← pega o ID real do cliente
+        int idCliente = clienteDAO.inserirClienteCompleto(cliente);
 
         if (idCliente > 0) {
             Endereco endereco = new Endereco();
@@ -230,7 +225,7 @@ private void handleCadastrar() {
             endereco.setNumero(numeroField.getText());
             endereco.setBairro(bairroField.getText());
             endereco.setComplemento(complementoField.getText());
-            endereco.setClienteId(idCliente); // ← agora é o id_cliente mesmo
+            endereco.setClienteId(idCliente);
 
             EnderecoDAO enderecoDAO = new EnderecoDAO(conn);
             if (enderecoDAO.inserir(endereco)) {

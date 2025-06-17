@@ -17,9 +17,11 @@ public class Produto {
     this.unidade = unidade;
 }
 
+public Produto() {}
+
 @Override
     public String toString() {
-        return nome; // ou qualquer atributo que queira exibir, como nome + categoria, etc.
+        return nome;
     }
 
     // Getters e Setters
@@ -40,4 +42,6 @@ public class Produto {
 
     public UnidadeMedida getUnidade() {return unidade; }
     public String getNomeUnidade() {return unidade != null ? unidade.getNome() : "";}
+
+     public void setUnidade(UnidadeMedida unidade) { this.unidade = unidade;}
 }

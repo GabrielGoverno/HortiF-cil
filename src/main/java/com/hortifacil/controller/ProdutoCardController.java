@@ -1,6 +1,8 @@
 package com.hortifacil.controller;
 
 import com.hortifacil.model.Produto;
+import com.hortifacil.model.ProdutoEstoque;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -17,7 +19,9 @@ public class ProdutoCardController {
     @FXML private Button adicionarBtn;
     @FXML private Label mensagemLabel;
     @FXML private TextField quantidadeField;
+    @FXML private Label quantidadeLabel;
 
+    private int quantidadeDisponivel;
     private Produto produto;
     private ProdutoCardListener listener;
 
@@ -29,14 +33,14 @@ public class ProdutoCardController {
         this.listener = listener;
     }
 
-    public void setProduto(Produto produto) {
-    this.produto = produto;
+   public void setProdutoEstoque(ProdutoEstoque produtoEstoque) {
+    this.produto = produtoEstoque.getProduto();
+    this.quantidadeDisponivel = produtoEstoque.getQuantidade();
 
     nomeLabel.setText(produto.getNome());
-    precoLabel.setText(String.format("R$ %.2f", produto.getPreco()));
-    mensagemLabel.setText(""); // Limpa feedback anterior
+    quantidadeLabel.setText(quantidadeDisponivel + " " + produto.getUnidade() + " disponíveis");
+    precoLabel.setText(String.format("R$ %.2f por %s", produto.getPreco(), produto.getUnidade()));
 
-    // Carrega imagem do produto
     var recurso = getClass().getResource(produto.getCaminhoImagem());
     if (recurso != null) {
         Image img = new Image(recurso.toExternalForm());
@@ -51,31 +55,62 @@ public class ProdutoCardController {
     imagemView.setSmooth(true);
     imagemView.setCache(true);
 
-    // Clip fixo para evitar distorção
     Rectangle clip = new Rectangle(140, 140);
     imagemView.setClip(clip);
 
-    adicionarBtn.setDisable(false); // garante que botão esteja habilitado
+    adicionarBtn.setDisable(false);
 
-    // CORRETO: define uma única vez a ação do botão
+    adicionarBtn.setOnAction(e -> handleAdicionarAoCarrinho());
+}
+
+public void setProdutoQuantidadeDisponivel(Produto produto, int quantidadeDisponivel) {
+    this.produto = produto;
+    this.quantidadeDisponivel = quantidadeDisponivel;
+
+    nomeLabel.setText(produto.getNome());
+    quantidadeLabel.setText(quantidadeDisponivel + " " + produto.getUnidade() + " disponíveis");
+    precoLabel.setText(String.format("R$ %.2f por %s", produto.getPreco(), produto.getUnidade()));
+
+    var recurso = getClass().getResource(produto.getCaminhoImagem());
+    if (recurso != null) {
+        Image img = new Image(recurso.toExternalForm());
+        imagemView.setImage(img);
+    } else {
+        imagemView.setImage(new Image(getClass().getResource("/imagens/placeholder.png").toExternalForm()));
+    }
+
+    imagemView.setFitWidth(140);
+    imagemView.setFitHeight(140);
+    imagemView.setPreserveRatio(true);
+    imagemView.setSmooth(true);
+    imagemView.setCache(true);
+
+    Rectangle clip = new Rectangle(140, 140);
+    imagemView.setClip(clip);
+
+    adicionarBtn.setDisable(false);
     adicionarBtn.setOnAction(e -> handleAdicionarAoCarrinho());
 }
 
     @FXML
-private void handleAdicionarAoCarrinho() {
-    int quantidade = 1;
-    try {
-        quantidade = Integer.parseInt(quantidadeField.getText());
-        if (quantidade <= 0) throw new NumberFormatException();
-    } catch (NumberFormatException e) {
-        System.out.println("Quantidade inválida. Usando 1.");
-        quantidade = 1;
-    }
+    private void handleAdicionarAoCarrinho() {
+        int quantidade = 1;
+            try {
+                quantidade = Integer.parseInt(quantidadeField.getText());
+                if (quantidade <= 0) throw new NumberFormatException();
+            } catch (NumberFormatException e) {
+                mensagemLabel.setText("Quantidade inválida. Usando 1.");
+                quantidade = 1;
+            }
 
-    if (listener != null) {
-        listener.onAdicionarAoCarrinho(produto, quantidade);
-        mensagemLabel.setText("Adicionado!");
-    }
-}
+            if (quantidade > quantidadeDisponivel) {
+                mensagemLabel.setText("❌ Só temos " + quantidadeDisponivel + " " + produto.getUnidade() + " disponíveis.");
+                return;
+            }
 
+            if (listener != null) {
+            listener.onAdicionarAoCarrinho(produto, quantidade);
+            mensagemLabel.setText("✅ Adicionado ao carrinho!");
+        }
+    }
 }

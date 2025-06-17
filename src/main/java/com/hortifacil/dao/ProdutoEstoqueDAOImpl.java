@@ -5,24 +5,28 @@ import com.hortifacil.model.ProdutoEstoque;
 import com.hortifacil.model.UnidadeMedida;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ProdutoEstoqueDAOImpl implements ProdutoEstoqueDAO {
 
     private final Connection connection;
+    private final ProdutoDAO produtoDAO; 
 
-    public ProdutoEstoqueDAOImpl(Connection connection) {
+    public ProdutoEstoqueDAOImpl(Connection connection, ProdutoDAO produtoDAO) {
         this.connection = connection;
+        this.produtoDAO = produtoDAO;  
     }
+
 
     @Override
     public int adicionarLote(ProdutoEstoque lote) {
-        String sql = "INSERT INTO produto_estoque (produto_id, quantidade, data_colheita, data_validade) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO produto_estoque (id_produto, quantidade, data_colheita, data_validade) VALUES (?, ?, ?, ?)";
 
         try (PreparedStatement stmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setInt(1, lote.getProduto().getId());
-            stmt.setDouble(2, lote.getQuantidade());
+            stmt.setInt(2, lote.getQuantidade());
            if (lote.getDataColhido() != null) {
                 stmt.setDate(3, Date.valueOf(lote.getDataColhido()));
             } else {
@@ -57,12 +61,15 @@ public class ProdutoEstoqueDAOImpl implements ProdutoEstoqueDAO {
 public List<ProdutoEstoque> listarLotesPorProduto(int produtoId) {
     List<ProdutoEstoque> lotes = new ArrayList<>();
     String sql = """
-SELECT ... FROM produto_estoque pe
-JOIN produto p ON pe.produto_id = p.id_produto
-JOIN unidade_medida u ON p.id_unidade = u.id_unidade
-WHERE pe.produto_id = ?
-ORDER BY pe.data_validade ASC
-""";
+        SELECT pe.id, pe.quantidade, pe.data_colheita, pe.data_validade,
+               p.id_produto, p.nome, p.preco_unitario, p.imagem_path, p.descricao,
+               u.id_unidade, u.nome AS nome_unidade
+        FROM produto_estoque pe
+        JOIN produto p ON pe.id_produto = p.id_produto
+        JOIN unidade_medida u ON p.id_unidade = u.id_unidade
+        WHERE pe.id_produto = ?
+        ORDER BY pe.data_colheita ASC  -- FIFO: mais antigo primeiro
+    """;
 
     try (PreparedStatement stmt = connection.prepareStatement(sql)) {
         stmt.setInt(1, produtoId);
@@ -77,18 +84,21 @@ ORDER BY pe.data_validade ASC
             Produto produto = new Produto(
                 produtoId,
                 rs.getString("nome"),
-                rs.getDouble("preco"),
-                rs.getString("caminho_imagem"),
+                rs.getDouble("preco_unitario"),
+                rs.getString("imagem_path"),
                 rs.getString("descricao"),
                 unidade
             );
 
+            Date dataColheita = rs.getDate("data_colheita");
+            Date dataValidade = rs.getDate("data_validade");
+
             ProdutoEstoque lote = new ProdutoEstoque(
                 rs.getInt("id"),
                 produto,
-                rs.getDouble("quantidade"),
-                rs.getDate("data_colheita").toLocalDate(),
-                rs.getDate("data_validade").toLocalDate()
+                rs.getInt("quantidade"),
+                (dataColheita != null) ? dataColheita.toLocalDate() : null,
+                (dataValidade != null) ? dataValidade.toLocalDate() : null
             );
 
             lotes.add(lote);
@@ -100,11 +110,12 @@ ORDER BY pe.data_validade ASC
     return lotes;
 }
 
+
     @Override
-    public boolean atualizarQuantidadeLote(int idLote, double novaQuantidade) {
+    public boolean atualizarQuantidadeLote(int idLote, int novaQuantidade) {
         String sql = "UPDATE produto_estoque SET quantidade = ? WHERE id = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            stmt.setDouble(1, novaQuantidade);
+            stmt.setInt(1, novaQuantidade);
             stmt.setInt(2, idLote);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -134,15 +145,15 @@ ORDER BY pe.data_validade ASC
 public List<ProdutoEstoque> listarTodos() {
     List<ProdutoEstoque> lotes = new ArrayList<>();
     String sql = """
-    SELECT pe.id, pe.quantidade, pe.data_colheita, pe.data_validade,
-           p.id_produto as produto_id, p.nome, p.preco_unitario as preco_unitario,
-           p.imagem_path as caminho_imagem, p.descricao,
-           u.id_unidade, u.nome as nome_unidade
-    FROM produto_estoque pe
-    JOIN produto p ON pe.produto_id = p.id_produto
-    JOIN unidade_medida u ON p.id_unidade = u.id_unidade
-    ORDER BY pe.data_validade ASC
-""";
+                    SELECT pe.id, pe.quantidade, pe.data_colheita, pe.data_validade,
+                        p.id_produto as id_produto, p.nome, p.preco_unitario as preco_unitario,
+                        p.imagem_path as caminho_imagem, p.descricao,
+                        u.id_unidade, u.nome as nome_unidade
+                    FROM produto_estoque pe
+                    JOIN produto p ON pe.id_produto = p.id_produto
+                    JOIN unidade_medida u ON p.id_unidade = u.id_unidade
+                    ORDER BY pe.data_validade ASC
+                """;
 
     try (PreparedStatement stmt = connection.prepareStatement(sql)) {
         ResultSet rs = stmt.executeQuery();
@@ -154,7 +165,7 @@ public List<ProdutoEstoque> listarTodos() {
             );
 
             Produto produto = new Produto(
-                rs.getInt("produto_id"),
+                rs.getInt("id_produto"),
                 rs.getString("nome"),
                 rs.getDouble("preco_unitario"),
                 rs.getString("caminho_imagem"),
@@ -168,7 +179,7 @@ public List<ProdutoEstoque> listarTodos() {
             ProdutoEstoque lote = new ProdutoEstoque(
                 rs.getInt("id"),
                 produto,
-                rs.getDouble("quantidade"),
+                rs.getInt("quantidade"),
                 (dataColheita != null) ? dataColheita.toLocalDate() : null,
                 (dataValidade != null) ? dataValidade.toLocalDate() : null
             );
@@ -185,13 +196,16 @@ public List<ProdutoEstoque> listarTodos() {
    @Override
 public List<ProdutoEstoque> buscarPorNomeProduto(String nomeProduto) throws SQLException {
     List<ProdutoEstoque> lotes = new ArrayList<>();
-   String sql = """
-SELECT ... FROM produto_estoque pe
-JOIN produto p ON pe.produto_id = p.id_produto
-JOIN unidade_medida u ON p.id_unidade = u.id_unidade
-WHERE p.nome LIKE ?
-ORDER BY pe.data_validade ASC
-""";
+    String sql = """
+            SELECT pe.id, pe.quantidade, pe.data_colheita, pe.data_validade,
+                   p.id_produto, p.nome, p.preco_unitario, p.imagem_path, p.descricao,
+                   u.id_unidade, u.nome AS nome_unidade
+            FROM produto_estoque pe
+            JOIN produto p ON pe.id_produto = p.id_produto
+            JOIN unidade_medida u ON p.id_unidade = u.id_unidade
+            WHERE p.nome LIKE ?
+            ORDER BY pe.data_validade ASC
+            """;
 
     try (PreparedStatement stmt = connection.prepareStatement(sql)) {
         stmt.setString(1, "%" + nomeProduto + "%");
@@ -203,20 +217,26 @@ ORDER BY pe.data_validade ASC
                 );
 
                 Produto produto = new Produto(
-                    rs.getInt("produto_id"),
+                    rs.getInt("id_produto"),
                     rs.getString("nome"),
                     rs.getDouble("preco_unitario"),
-                    rs.getString("caminho_imagem"),
+                    rs.getString("imagem_path"),
                     rs.getString("descricao"),
                     unidade
                 );
 
+                Date dataColheita = rs.getDate("data_colheita");
+                LocalDate localDataColheita = (dataColheita != null) ? dataColheita.toLocalDate() : null;
+
+                Date dataValidade = rs.getDate("data_validade");
+                LocalDate localDataValidade = (dataValidade != null) ? dataValidade.toLocalDate() : null;
+
                 ProdutoEstoque lote = new ProdutoEstoque(
                     rs.getInt("id"),
                     produto,
-                    rs.getDouble("quantidade"),
-                    rs.getDate("data_colheita").toLocalDate(),
-                    rs.getDate("data_validade").toLocalDate()
+                    rs.getInt("quantidade"),
+                    localDataColheita,
+                    localDataValidade
                 );
 
                 lotes.add(lote);
@@ -225,6 +245,86 @@ ORDER BY pe.data_validade ASC
     }
 
     return lotes;
+}
+
+  @Override
+    public ProdutoEstoque buscarPorProdutoData(int produtoId, LocalDate dataColhido, LocalDate dataValidade) throws SQLException {
+        String sql = "SELECT * FROM produto_estoque WHERE id_produto = ? AND data_colheita = ? AND data_validade = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, produtoId);
+            stmt.setDate(2, java.sql.Date.valueOf(dataColhido));
+            stmt.setDate(3, java.sql.Date.valueOf(dataValidade));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Produto produto = produtoDAO.buscarPorId(produtoId);  // usa o produtoDAO injetado
+                    return new ProdutoEstoque(
+                        rs.getInt("id"),
+                        produto,
+                        rs.getInt("quantidade"),
+                        rs.getDate("data_colheita").toLocalDate(),
+                        rs.getDate("data_validade").toLocalDate()
+                    );
+                }
+            }
+        }
+        return null;
+    }
+
+public int getQuantidadeEstoquePorNome(String nomeProduto) throws SQLException {
+    String sql = "SELECT SUM(pe.quantidade)\r\n" +
+                "FROM produto_estoque pe\r\n" +
+                "JOIN produto p ON pe.id_produto = p.id_produto\r\n" +
+                "WHERE p.nome = ?\r\n" +
+                "";
+    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        stmt.setString(1, nomeProduto);
+        ResultSet rs = stmt.executeQuery();
+        if (rs.next()) {
+            return rs.getInt(1);
+        } else {
+            return 0;
+        }
+    }
+}
+
+@Override
+public List<ProdutoEstoque> buscarLotesPorProdutoOrdenados(int idProduto) throws SQLException {
+    String sql = "SELECT * FROM produto_estoque WHERE id_produto = ? ORDER BY data_colheita ASC";
+    List<ProdutoEstoque> lotes = new ArrayList<>();
+    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        stmt.setInt(1, idProduto);
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Produto produto = produtoDAO.buscarPorId(rs.getInt("id_produto"));
+                ProdutoEstoque lote = new ProdutoEstoque(
+                    rs.getInt("id"),
+                    produto,
+                    rs.getInt("quantidade"),
+                    rs.getDate("data_colheita").toLocalDate(),
+                    rs.getDate("data_validade").toLocalDate()
+                );
+                lotes.add(lote);
+            }
+        }
+    }
+    return lotes;
+}
+
+public int somarQuantidadePorProduto(int idProduto) throws SQLException {
+   int total = 0;
+    String sql = "SELECT SUM(quantidade) FROM produto_estoque WHERE id_produto = ?";
+    
+    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        stmt.setInt(1, idProduto);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                total = rs.getInt(1);
+            }
+        }
+    }
+    
+    return total;
 }
 
 }

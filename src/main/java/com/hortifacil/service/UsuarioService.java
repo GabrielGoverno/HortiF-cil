@@ -21,24 +21,24 @@ public class UsuarioService {
         this.usuarioDAO = new UsuarioDAO(conn);
     }
 
-    public ResultadoLogin autenticar(String login, String senha) throws SQLException {
-        Usuario usuario = usuarioDAO.buscarPorlogin(login);
+    public ResultadoLogin autenticar(String Login, String senha) throws SQLException {
+        Usuario usuario = usuarioDAO.buscarPorLogin(Login);
     if (usuario == null) return ResultadoLogin.USUARIO_NAO_ENCONTRADO;
     if (usuario.getStatus() != Enums.StatusUsuario.ATIVO) return ResultadoLogin.USUARIO_INATIVO;
     if (!usuarioDAO.validarLogin(usuario, senha)) return ResultadoLogin.SENHA_INVALIDA;
     return ResultadoLogin.SUCESSO;
     }
 
-    public Usuario getUsuarioPorlogin(String login) throws SQLException {
-        return usuarioDAO.buscarPorlogin(login);
+    public Usuario getUsuarioPorLogin(String Login) throws SQLException {
+        return usuarioDAO.buscarPorLogin(Login);
     }
 
     public boolean cadastrarUsuario(Usuario usuario) {
         try {
             validarUsuario(usuario);
 
-            if (usuarioDAO.buscarPorlogin(usuario.getlogin()) != null) {
-                System.out.println("Usuário já cadastrado: " + usuario.getlogin());
+            if (usuarioDAO.buscarPorLogin(usuario.getLogin()) != null) {
+                System.out.println("Usuário já cadastrado: " + usuario.getLogin());
                 return false;
             }
 
@@ -50,7 +50,7 @@ public class UsuarioService {
     }
 
     private void validarUsuario(Usuario usuario) {
-        if (usuario.getlogin() == null || usuario.getlogin().trim().isEmpty()) {
+        if (usuario.getLogin() == null || usuario.getLogin().trim().isEmpty()) {
             throw new IllegalArgumentException("Usuário é obrigatório.");
         }
         if (usuario.getSenha() == null || usuario.getSenha().length() < 6) {

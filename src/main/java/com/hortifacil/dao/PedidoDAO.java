@@ -3,6 +3,7 @@ package com.hortifacil.dao;
 import com.hortifacil.model.CarrinhoProduto;
 import com.hortifacil.model.Pedido;
 import com.hortifacil.model.Produto;
+import com.hortifacil.model.UnidadeMedida;
 import com.hortifacil.database.DatabaseConnection;
 
 import java.sql.*;
@@ -196,5 +197,55 @@ public List<CarrinhoProduto> listarItensPorPedido(int idPedido) {
     }
     return itens;
 }
+
+public List<CarrinhoProduto> buscarItensPedido(int idPedido) {
+    List<CarrinhoProduto> itens = new ArrayList<>();
+
+    String sql = """
+        SELECT cp.id_produto, cp.quantidade, cp.preco_unitario,
+               p.nome, p.descricao, p.imagem_path, p.preco_unitario,
+               u.id_unidade, u.nome as nome_unidade
+        FROM pedido_produto cp
+        JOIN produto p ON cp.id_produto = p.id_produto
+        JOIN unidade_medida u ON p.id_unidade = u.id_unidade
+        WHERE cp.id_pedido = ?
+    """;
+
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setInt(1, idPedido);
+        ResultSet rs = stmt.executeQuery();
+
+        while (rs.next()) {
+            UnidadeMedida unidade = new UnidadeMedida(
+                rs.getInt("id_unidade"),
+                rs.getString("nome_unidade")
+            );
+
+            Produto produto = new Produto(
+                rs.getInt("id_produto"),
+                rs.getString("nome"),
+                rs.getDouble("preco_unitario"),
+                rs.getString("imagem_path"),
+                rs.getString("descricao"),
+                unidade
+            );
+
+            CarrinhoProduto item = new CarrinhoProduto();
+            item.setProduto(produto);
+            item.setQuantidade((int) rs.getDouble("quantidade"));
+            item.setPrecoUnitario(rs.getDouble("preco_unitario"));
+
+            itens.add(item);
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+
+    return itens;
+}
+
 
 }

@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import com.hortifacil.database.DatabaseConnection;
+import com.hortifacil.dao.CarrinhoProdutoDAO;
 import com.hortifacil.dao.ProdutoDAO;
 import com.hortifacil.dao.ProdutoDAOImpl;
 import com.hortifacil.dao.UnidadeMedidaDAO;
@@ -12,7 +13,11 @@ import com.hortifacil.dao.UnidadeMedidaDAOImpl;
 import com.hortifacil.model.Produto;
 import com.hortifacil.model.UnidadeMedida;
 import com.hortifacil.service.ProdutoService;
+import com.hortifacil.model.CarrinhoProduto;
+import com.hortifacil.model.Cliente;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 
@@ -31,6 +36,14 @@ public class CadastroProdutoController {
     private ProdutoService produtoService;
     private UnidadeMedidaDAO unidadeMedidaDAO;
 
+    private CarrinhoProdutoDAO carrinhoProdutoDAO;
+    private Cliente clienteLogado;
+    private ObservableList<CarrinhoProduto> carrinho = FXCollections.observableArrayList();
+
+
+    public void setClienteLogado(Cliente cliente) {
+    this.clienteLogado = cliente;
+    }
     public void setProdutoService(ProdutoService produtoService) {
         this.produtoService = produtoService;
     }
@@ -44,11 +57,9 @@ private void initialize() {
     try {
         Connection conn = DatabaseConnection.getConnection();
         
-        // Instancia DAOs
         unidadeMedidaDAO = new UnidadeMedidaDAOImpl(conn);
         ProdutoDAO produtoDAO = new ProdutoDAOImpl(conn);
         
-        // Instancia Service passando o DAO no construtor
         produtoService = new ProdutoService(produtoDAO);
 
         List<UnidadeMedida> unidades = unidadeMedidaDAO.listarTodas();
@@ -76,6 +87,19 @@ private void initialize() {
 
 }
 
+public void carregarItensCarrinho() {
+    if (clienteLogado == null) {
+        System.out.println("Cliente não está setado.");
+        return;
+    }
+    try {
+        List<CarrinhoProduto> itens = carrinhoProdutoDAO.listarPorCliente(clienteLogado.getId());
+        carrinho.clear();
+        carrinho.addAll(itens);
+    } catch (SQLException e) {
+        e.printStackTrace();
+    }
+}
 
     private void salvarProduto() {
     try {
@@ -85,7 +109,6 @@ private void initialize() {
         String descricao = descricaoArea.getText().trim();
         UnidadeMedida unidade = unidadeComboBox.getSelectionModel().getSelectedItem();
 
-        // Validações
         if (nome.isEmpty()) {
             setMensagem("O nome do produto é obrigatório.", "red");
             return;

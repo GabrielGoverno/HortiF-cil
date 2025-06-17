@@ -19,11 +19,17 @@
     <ImageView fx:id="logoImage" fitWidth="200" preserveRatio="true"/>
 
     <VBox spacing="15" alignment="CENTER">
-        <Button fx:id="btnControleEstoque"
-                text="Controle de Estoque"
+        <Button fx:id="btnAdicionarEstoque"
+                text="adicionar Produtos"
                 prefWidth="250"
                 styleClass="button-primary"
-                onAction="#abrirControleEstoque"/>
+                onAction="#abrirAdicionarEstoque"/>
+
+        <Button fx:id="btnEstoqueAtual"
+                text="Estoque Atual"
+                prefWidth="250"
+                styleClass="button-kingcrimson"
+                onAction="#abrirEstoqueAtual"/>
 
         <Button fx:id="btnCadastroProdutos"
                 text="Cadastro de Produtos"

@@ -14,7 +14,7 @@ import javafx.event.ActionEvent;
 public class HomeAdminController {
 
     @FXML
-    private Button btnControleEstoque;
+    private Button btnAdicionarEstoque;
     
     @FXML
     private Button btnCadastroProdutos;
@@ -25,14 +25,24 @@ public class HomeAdminController {
     @FXML
     private Button btnAbrirTelaPedidos;
 
+     @FXML
+    private Button btnEstoqueAtual;
+
     @FXML
-    private void abrirControleEstoque(ActionEvent event) {
+    private void abrirAdicionarEstoque(ActionEvent event) {
         SceneController.trocarCena(
-            (Stage) btnControleEstoque.getScene().getWindow(),
-            "/view/ControleEstoqueAdminView.fxml",  
+            (Stage) btnAdicionarEstoque.getScene().getWindow(),
+            "/view/AdicionarEstoqueView.fxml",  
             "Controle de Estoque"
         );
     }
+
+    @FXML
+    private void abrirEstoqueAtual() {
+        Stage stage = (Stage) btnEstoqueAtual.getScene().getWindow();
+        SceneController.trocarCena(stage, "/view/EstoqueResumoView.fxml", "Estoque Atual");
+    }
+
 
     @FXML
     private void abrirCadastroProdutos(ActionEvent event) {

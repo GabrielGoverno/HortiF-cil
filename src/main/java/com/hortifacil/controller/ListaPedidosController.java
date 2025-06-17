@@ -1,6 +1,10 @@
 package com.hortifacil.controller;
 
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
@@ -10,7 +14,7 @@ import com.hortifacil.model.Pedido;
 import com.hortifacil.service.PedidoService;
 import com.hortifacil.service.ClienteService;
 
-
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -41,38 +45,44 @@ public class ListaPedidosController {
     private ClienteService clienteService;
 
     @FXML
-    public void initialize() {
-        pedidoService = PedidoService.getInstance();
-        clienteService = ClienteService.getInstance();
+public void initialize() {
+    pedidoService = PedidoService.getInstance();
+    clienteService = ClienteService.getInstance();
+    
+    colNumeroPedido.setCellValueFactory(cellData -> {
+        int total = tablePedidos.getItems().size();
+        int index = tablePedidos.getItems().indexOf(cellData.getValue());
+        return new ReadOnlyObjectWrapper<>(total - index);
+    });
 
-        colNumeroPedido.setCellValueFactory(new PropertyValueFactory<>("idPedido"));
-        colDataPedido.setCellValueFactory(new PropertyValueFactory<>("dataPedido"));
-        colValorTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
+    colDataPedido.setCellValueFactory(new PropertyValueFactory<>("dataPedido"));
+    colValorTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
 
-        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
-        colStatus.setCellFactory(tc -> new TableCell<Pedido, String>() {
-            @Override
-            protected void updateItem(String status, boolean empty) {
-                super.updateItem(status, empty);
-                if (empty) {
-                    setText(null);
-                    setGraphic(null);
-                    setOnMouseClicked(null);
-                } else {
-                    setText(status);
-                    setStyle("-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;");
-                    setOnMouseClicked(e -> {
-                        Pedido pedido = getTableView().getItems().get(getIndex());
-                        mostrarDetalhesPedido(pedido);
-                    });
-                }
+    colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+    colStatus.setCellFactory(tc -> new TableCell<Pedido, String>() {
+        @Override
+        protected void updateItem(String status, boolean empty) {
+            super.updateItem(status, empty);
+            if (empty) {
+                setText(null);
+                setGraphic(null);
+                setOnMouseClicked(null);
+            } else {
+                setText(status);
+                setStyle("-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;");
+                setOnMouseClicked(e -> {
+                    Pedido pedido = getTableView().getItems().get(getIndex());
+                    mostrarDetalhesPedido(pedido);
+                });
             }
-        });
+        }
+    });
 
-        adicionarBotoesAcoes();
+    adicionarBotoesAcoes();
 
-        carregarPedidos();
-    }
+    carregarPedidos();
+}
+
 
     private void adicionarBotoesAcoes() {
         colAcoes.setCellFactory(param -> new TableCell<Pedido, Void>() {
@@ -117,24 +127,32 @@ public class ListaPedidosController {
         }
     }
 
-    private void mostrarDetalhesPedido(Pedido pedido) {
-        String detalhes = pedido.getItens().stream()
-                .map(i -> i.getProduto().getNome() + " x" + i.getQuantidade())
-                .reduce((a, b) -> a + "\n" + b)
-                .orElse("Nenhum item");
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Detalhes do Pedido #" + pedido.getIdPedido());
-        alert.setHeaderText("Itens do Pedido");
-        alert.setContentText(detalhes);
-        alert.showAndWait();
-    }
-
     private void carregarPedidos() {
         List<Pedido> pedidos = pedidoService.listarTodosPedidos();
         tablePedidos.getItems().setAll(pedidos);
     }
     
+
+    private void mostrarDetalhesPedido(Pedido pedido) {
+    try {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/DetalhesPedidoAdminView.fxml"));
+        Parent root = loader.load();
+
+        DetalhesPedidoAdminController controller = loader.getController();
+        controller.setPedido(pedido);
+
+
+        Stage stage = (Stage) tablePedidos.getScene().getWindow();
+
+        stage.setTitle("Detalhes do Pedido #" + pedido.getIdPedido());
+        stage.setScene(new Scene(root));
+        stage.show();
+
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
+}
+
  @FXML
 private void btnVoltarHome() {
     Stage stage = (Stage) btnVoltarHome.getScene().getWindow();

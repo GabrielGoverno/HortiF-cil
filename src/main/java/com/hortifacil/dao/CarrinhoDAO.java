@@ -79,10 +79,11 @@ public class CarrinhoDAO {
     public List<CarrinhoProduto> listarItensCarrinho(int idCliente) {
         List<CarrinhoProduto> itens = new ArrayList<>();
 
-        String sql = "SELECT cp.id_produto, cp.quantidade, cp.preco_unitario, p.nome, p.descricao, p.caminho_imagem " +
-                     "FROM carrinho_produto cp " +
-                     "JOIN produto p ON cp.id_produto = p.id " +
-                     "WHERE cp.id_cliente = ?";
+       String sql = "SELECT cp.id_produto, cp.quantidade, cp.preco_unitario as preco_carrinho, " +
+             "p.nome, p.descricao, p.preco_unitario as preco_produto, p.caminho_imagem " +
+             "FROM carrinho_produto cp " +
+             "JOIN produto p ON cp.id_produto = p.id " +
+             "WHERE cp.id_cliente = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -95,10 +96,10 @@ public class CarrinhoDAO {
                 Produto produto = new Produto(
                 rs.getInt("id_produto"),
                 rs.getString("nome"),
-                rs.getDouble("preco_unitario"), // ou rs.getDouble("preco"), se existir
+               rs.getDouble("preco_produto"),
                 rs.getString("caminho_imagem"),
                 rs.getString("descricao"),
-                null // ou UnidadeMedida, se precisar
+                null
             );
 
             CarrinhoProduto item = new CarrinhoProduto(

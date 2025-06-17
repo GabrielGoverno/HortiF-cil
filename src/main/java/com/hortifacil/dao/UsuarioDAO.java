@@ -18,20 +18,20 @@ public class UsuarioDAO {
     }
 
 public boolean inserirUsuario(Usuario usuario) throws SQLException {
-    if (usuario.getlogin() == null || usuario.getSenha() == null) {
-        throw new IllegalArgumentException("login e senha são obrigatórios.");
+    if (usuario.getLogin() == null || usuario.getSenha() == null) {
+        throw new IllegalArgumentException("Login e senha são obrigatórios.");
     }
 
-    if (existelogin(usuario.getlogin())) {
-        throw new SQLException("login já cadastrado.");
+    if (existeLogin(usuario.getLogin())) {
+        throw new SQLException("Login já cadastrado.");
     }
 
     try {
         conn.setAutoCommit(false); // inicia transação
 
-        String sqlUsuario = "INSERT INTO usuario (login, senha, tipo, status) VALUES (?, ?, ?, ?)";
+        String sqlUsuario = "INSERT INTO usuario (Login, senha, tipo, status) VALUES (?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sqlUsuario, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, usuario.getlogin());
+            stmt.setString(1, usuario.getLogin());
             String senhaHash = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
             stmt.setString(2, senhaHash);
             stmt.setString(3, usuario.getTipo().name());
@@ -81,10 +81,10 @@ public boolean inserirUsuario(Usuario usuario) throws SQLException {
     }
 }
 
-    public Usuario buscarPorlogin(String login) throws SQLException {
-        String sql = "SELECT u.*, c.cpf, c.nome, c.email, c.telefone FROM usuario u LEFT JOIN cliente c ON u.id_usuario = c.id_usuario WHERE u.login = ?";
+    public Usuario buscarPorLogin(String Login) throws SQLException {
+        String sql = "SELECT u.*, c.cpf, c.nome, c.email, c.telefone FROM usuario u LEFT JOIN cliente c ON u.id_usuario = c.id_usuario WHERE u.Login = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, login);
+            stmt.setString(1, Login);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return UsuarioMapper.montarUsuario(rs);
@@ -127,12 +127,12 @@ public boolean atualizarUsuario(Usuario usuario) throws SQLException {
     boolean atualizarSenha = usuario.getSenha() != null && !usuario.getSenha().trim().isEmpty();
 
     String sqlUsuario = atualizarSenha
-            ? "UPDATE usuario SET login = ?, senha = ?, tipo = ?, status = ? WHERE id_usuario = ?"
-            : "UPDATE usuario SET login = ?, tipo = ?, status = ? WHERE id_usuario = ?";
+            ? "UPDATE usuario SET Login = ?, senha = ?, tipo = ?, status = ? WHERE id_usuario = ?"
+            : "UPDATE usuario SET Login = ?, tipo = ?, status = ? WHERE id_usuario = ?";
 
     try (PreparedStatement stmt = conn.prepareStatement(sqlUsuario)) {
         int idx = 1;
-        stmt.setString(idx++, usuario.getlogin());
+        stmt.setString(idx++, usuario.getLogin());
 
         if (atualizarSenha) {
             String senhaHash = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
@@ -163,19 +163,10 @@ public boolean atualizarUsuario(Usuario usuario) throws SQLException {
     return true;  // retorna true só se tudo deu certo
 }
 
-
-    public boolean excluirUsuario(int id) throws SQLException {
-        String sql = "DELETE FROM usuario WHERE id_usuario = ?";
+    private boolean existeLogin(String Login) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM usuario WHERE Login = ?";
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, id);
-            return stmt.executeUpdate() > 0;
-        }
-    }
-
-    private boolean existelogin(String login) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM usuario WHERE login = ?";
-        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, login);
+            stmt.setString(1, Login);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;

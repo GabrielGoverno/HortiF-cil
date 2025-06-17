@@ -13,13 +13,14 @@ public class ClienteService {
     private static ClienteService instance;
 
     private ClienteService() {
-        try {
-            Connection conn = DatabaseConnection.getConnection();
-            clienteDAO = new ClienteDAO(conn);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+    try {
+        Connection conn = DatabaseConnection.getConnection();
+        clienteDAO = new ClienteDAO(conn);
+    } catch (SQLException e) {
+        e.printStackTrace();
+        throw new RuntimeException("Falha ao criar ClienteDAO", e);
     }
+}
 
     public static ClienteService getInstance() {
         if (instance == null) {

@@ -18,9 +18,9 @@ public class ClienteDAO {
 
     // Insere só o usuário e retorna o ID gerado
     public int inserirUsuario(Usuario usuario) throws SQLException {
-        String sql = "INSERT INTO usuario (login, senha, tipo, status) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO usuario (Login, senha, tipo, status) VALUES (?, ?, ?, ?)";
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, usuario.getlogin());
+            stmt.setString(1, usuario.getLogin());
             String senhaHash = BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt());
             stmt.setString(2, senhaHash);
             stmt.setString(3, usuario.getTipo().name());
@@ -63,7 +63,7 @@ public class ClienteDAO {
 }
 
     public Cliente buscarPorCpf(String cpf) throws SQLException {
-        String sql = "SELECT u.id_usuario, u.login, u.senha, u.tipo, u.status, " +
+        String sql = "SELECT u.id_usuario, u.Login, u.senha, u.tipo, u.status, " +
                      "c.cpf, c.nome, c.email, c.telefone " +
                      "FROM usuario u JOIN cliente c ON u.id_usuario = c.id_usuario " +
                      "WHERE c.cpf = ?";
@@ -80,14 +80,14 @@ public class ClienteDAO {
     }
 
    public int inserirClienteCompleto(Cliente cliente) throws SQLException {
-    String sqlUsuario = "INSERT INTO usuario (login, senha, tipo, status) VALUES (?, ?, ?, ?)";
+    String sqlUsuario = "INSERT INTO usuario (Login, senha, tipo, status) VALUES (?, ?, ?, ?)";
     String sqlCliente = "INSERT INTO cliente (id_usuario, nome, cpf, email, telefone) VALUES (?, ?, ?, ?, ?)";
 
     try {
         conn.setAutoCommit(false);
 
         try (PreparedStatement stmtUser = conn.prepareStatement(sqlUsuario, Statement.RETURN_GENERATED_KEYS)) {
-            stmtUser.setString(1, cliente.getlogin());
+            stmtUser.setString(1, cliente.getLogin());
             stmtUser.setString(2, BCrypt.hashpw(cliente.getSenha(), BCrypt.gensalt()));
             stmtUser.setString(3, cliente.getTipo().name());
             stmtUser.setString(4, cliente.getStatus().name());
@@ -123,12 +123,14 @@ public class ClienteDAO {
 
             try (ResultSet rs = stmtCliente.getGeneratedKeys()) {
                 if (rs.next()) {
-                    return rs.getInt(1); // retorna o id_cliente
+                    int idCliente = rs.getInt(1);
+                    conn.commit();  // commit antes de retornar
+                    return idCliente; // retorna o id_cliente
                 }
             }
         }
 
-        conn.commit();
+        conn.rollback();
         return -1; // falhou ao obter id_cliente
     } catch (SQLException e) {
         conn.rollback();
@@ -141,7 +143,7 @@ public class ClienteDAO {
  private Cliente construirClienteCompleto(ResultSet rs) throws SQLException {
     Cliente cliente = new Cliente();
     cliente.setId(rs.getInt("id_usuario"));
-    cliente.setlogin(rs.getString("login"));
+    cliente.setLogin(rs.getString("Login"));
     cliente.setSenha(rs.getString("senha"));
     cliente.setTipo(Enums.TipoUsuario.valueOf(rs.getString("tipo").toUpperCase()));
     cliente.setStatus(Enums.StatusUsuario.valueOf(rs.getString("status").toUpperCase()));
@@ -204,6 +206,20 @@ public Cliente buscarPorIdCliente(int idCliente) {
         e.printStackTrace();
     }
     return "Endereço não cadastrado";
+}
+
+public int obterIdClientePorIdUsuario(int idUsuario) throws SQLException {
+    String sql = "SELECT id_cliente FROM cliente WHERE id_usuario = ?";
+    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, idUsuario);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                return rs.getInt("id_cliente");
+            } else {
+                throw new SQLException("Cliente não encontrado para id_usuario: " + idUsuario);
+            }
+        }
+    }
 }
 
 }

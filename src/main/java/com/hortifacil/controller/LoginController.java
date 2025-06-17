@@ -78,7 +78,7 @@ public class LoginController {
 
         switch (resultado) {
             case SUCESSO-> {
-                Usuario usuario = usuarioService.getUsuarioPorlogin(login);
+                Usuario usuario = usuarioService.getUsuarioPorLogin(login);
                 Stage stage = (Stage) loginButton.getScene().getWindow();
 
                 if (usuario.getTipo() == Enums.TipoUsuario.ADMIN) {

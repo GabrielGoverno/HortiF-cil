@@ -23,6 +23,10 @@
     <Label fx:id="precoLabel" styleClass="produto-preco"/>
 
     <HBox spacing="5" alignment="CENTER">
+        <Label fx:id="quantidadeLabel" styleClass="quantidade-disponivel" />
+    </HBox>
+
+    <HBox spacing="5" alignment="CENTER">
         <Label text="Qtd:"/>
         <TextField fx:id="quantidadeField" text="1" prefWidth="40"/>
     </HBox>

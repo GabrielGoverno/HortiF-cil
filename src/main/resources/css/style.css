@@ -292,13 +292,20 @@
     -fx-background-radius: 8;
 }
 
+.button-kingcrimson {
+    -fx-font-size: 16px;
+    -fx-background-color: #7a001f;
+    -fx-text-fill: white;
+    -fx-background-radius: 8;
+}
+
 .header-label {
     -fx-font-size: 24px;
     -fx-font-weight: bold;
     -fx-text-fill: #2e5d27; 
 }
 
-/* === caixa de imagens === */
+/* === caixa de produtos === */
 .produto-card {
     -fx-background-color: #d4f1dd;
     -fx-border-color:  #388e3c;
@@ -317,3 +324,17 @@
     -fx-font-weight: bold;
     -fx-background-radius: 6;
 }
+
+/* === caixa de imagens icones === */
+.cards {
+    -fx-background-color: #d4f1dd;
+    -fx-border-color:  #388e3c;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0.2, 0, 2);
+    -fx-min-width: 150;     /* aumente o mínimo */
+    -fx-max-width: 180;     /* aumente o máximo */
+}
+

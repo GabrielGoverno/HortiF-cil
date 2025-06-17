@@ -17,7 +17,6 @@ public class SceneController {
     private static final double MIN_WIDTH = 800;
     private static final double MIN_HEIGHT = 600;
 
-    // Aplica CSS global
     private static void aplicarEstilo(Scene scene) {
         URL cssUrl = SceneController.class.getResource("/css/style.css");
         if (cssUrl != null) {
@@ -25,14 +24,11 @@ public class SceneController {
             scene.getStylesheets().add(cssUrl.toExternalForm());
         }
     }
-
-    // Configura Stage com Scene e propriedades
     private static void configurarStage(Stage stage, Scene scene, String titulo, double largura, double altura) {
         stage.setScene(scene);
         if (titulo != null) {
             stage.setTitle(titulo);
         }
-        // Permite redimensionar para telas admin maiores
         stage.setResizable(true);
         stage.setMinWidth(largura);
         stage.setMinHeight(altura);
@@ -41,13 +37,11 @@ public class SceneController {
         stage.show();
     }
 
-    // Troca de cena simples (sem controller) com tamanho customizado
     public static void trocarCena(ActionEvent event, String caminhoFXML, String titulo, double largura, double altura) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         trocarCena(stage, caminhoFXML, titulo, largura, altura);
     }
 
-    // Troca de cena simples (sem controller) com tamanho padrão
     public static void trocarCena(ActionEvent event, String caminhoFXML, String titulo) {
         trocarCena(event, caminhoFXML, titulo, MIN_WIDTH, MIN_HEIGHT);
     }
@@ -71,13 +65,11 @@ public class SceneController {
         trocarCena(stage, caminhoFXML, titulo, MIN_WIDTH, MIN_HEIGHT);
     }
 
-    // Troca de cena com controller (usando Consumer) e tamanho customizado
     public static <T> void trocarCenaComDados(ActionEvent event, String caminhoFXML, String titulo, Consumer<T> configurador, double largura, double altura) {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         trocarCenaComDados(stage, caminhoFXML, titulo, configurador, largura, altura);
     }
 
-    // Troca de cena com controller (usando Consumer) com tamanho padrão
     public static <T> void trocarCenaComDados(ActionEvent event, String caminhoFXML, String titulo, Consumer<T> configurador) {
         trocarCenaComDados(event, caminhoFXML, titulo, configurador, MIN_WIDTH, MIN_HEIGHT);
     }
@@ -106,7 +98,6 @@ public class SceneController {
         trocarCenaComDados(stage, caminhoFXML, titulo, configurador, MIN_WIDTH, MIN_HEIGHT);
     }
 
-    // Troca de cena com controller + dados separados (BiConsumer) e tamanho customizado
     public static <T, D> void trocarCenaComDados(Stage stage, String caminhoFXML, String titulo, D dados,
                                                  BiConsumer<T, D> configurador, double largura, double altura) {
         try {
@@ -127,8 +118,6 @@ public class SceneController {
             e.printStackTrace();
         }
     }
-
-    // Troca de cena com controller + dados separados (BiConsumer) com tamanho padrão
     public static <T, D> void trocarCenaComDados(Stage stage, String caminhoFXML, String titulo, D dados,
                                                  BiConsumer<T, D> configurador) {
         trocarCenaComDados(stage, caminhoFXML, titulo, dados, configurador, MIN_WIDTH, MIN_HEIGHT);

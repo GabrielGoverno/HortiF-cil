@@ -14,23 +14,15 @@
       styleClass="root-pane"
       style="-fx-padding: 30;">
 
-    <!-- Logo -->
-    <ImageView fitWidth="100" fitHeight="100" preserveRatio="true">
-        <image>
-            <Image url="@/Imagens/logo.png"/>
-        </image>
-    </ImageView>
-
     <Label fx:id="welcomeLabel"
            text="Bem-vindo ao Hortifácil!"
            style="-fx-font-size: 24px; -fx-font-weight: bold;"/>
 
-    <!-- Cards dos recursos -->
+    <!-- Linha 1: 2 cards -->
     <HBox spacing="30" alignment="CENTER">
-
         <!-- Ver Produtos -->
-        <VBox alignment="CENTER" spacing="10" styleClass="produto-card">
-            <ImageView fitWidth="140" fitHeight="140" preserveRatio="true">
+        <VBox alignment="CENTER" spacing="10" styleClass="cards">
+            <ImageView fitWidth="120" fitHeight="120" preserveRatio="true">
                 <image>
                     <Image url="@/Imagens/verproduto.png"/>
                 </image>
@@ -39,18 +31,31 @@
         </VBox>
 
         <!-- Assinaturas -->
-        <VBox alignment="CENTER" spacing="10" styleClass="produto-card">
-            <ImageView fitWidth="140" fitHeight="140" preserveRatio="true">
+        <VBox alignment="CENTER" spacing="10" styleClass="cards">
+            <ImageView fitWidth="120" fitHeight="120" preserveRatio="true">
                 <image>
                     <Image url="@/Imagens/assinatura.png"/>
                 </image>
             </ImageView>
             <Button text="Assinaturas" prefWidth="160" disable="true"/>
         </VBox>
+    </HBox>
+
+    <!-- Linha 2: 2 cards -->
+    <HBox spacing="30" alignment="CENTER">
+        <!-- Meus Pedidos -->
+        <VBox alignment="CENTER" spacing="10" styleClass="cards">
+            <ImageView fitWidth="120" fitHeight="120" preserveRatio="true">
+                <image>
+                    <Image url="@/Imagens/meuspedidos.png"/>
+                </image>
+            </ImageView>
+            <Button text="Meus Pedidos" onAction="#handleVerPedidos" styleClass="button-green" prefWidth="160"/>
+        </VBox>
 
         <!-- Save to Food -->
-        <VBox alignment="CENTER" spacing="10"  styleClass="produto-card">
-            <ImageView fitWidth="140" fitHeight="140" preserveRatio="true">
+        <VBox alignment="CENTER" spacing="10" styleClass="cards">
+            <ImageView fitWidth="120" fitHeight="120" preserveRatio="true">
                 <image>
                     <Image url="@/Imagens/logo.png"/>
                 </image>

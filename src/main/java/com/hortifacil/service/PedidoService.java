@@ -13,6 +13,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Statement;
 
 public class PedidoService {
 
@@ -41,8 +42,8 @@ public class PedidoService {
             clienteId,
             LocalDate.now(),
             total,
-            "EM_ANDAMENTO", // status inicial
-            true            // ativo
+            "EM_ANDAMENTO",
+            true          
         );
 
         int idPedido = pedidoDAO.salvarPedido(pedido);
@@ -62,46 +63,45 @@ public class PedidoService {
     Connection conn = null;
     try {
         conn = DatabaseConnection.getConnection();
-        conn.setAutoCommit(false); // inicia transação
+        conn.setAutoCommit(false);
 
-        // 1. Obter carrinho aberto do cliente
-        String sqlCarrinho = "SELECT id_carrinho FROM carrinho WHERE id_cliente = ? AND status = 'ABERTO'";
+        // Buscar carrinho aberto
         int idCarrinho;
+        String sqlCarrinho = "SELECT id_carrinho FROM carrinho WHERE id_cliente = ? AND status = 'ABERTO'";
         try (PreparedStatement psCarrinho = conn.prepareStatement(sqlCarrinho)) {
             psCarrinho.setInt(1, clienteId);
-            ResultSet rs = psCarrinho.executeQuery();
-            if (rs.next()) {
-                idCarrinho = rs.getInt("id_carrinho");
-            } else {
-                System.out.println("Nenhum carrinho aberto encontrado para o cliente.");
-                conn.rollback();
-                return false;
+            try (ResultSet rs = psCarrinho.executeQuery()) {
+                if (rs.next()) {
+                    idCarrinho = rs.getInt("id_carrinho");
+                } else {
+                    System.out.println("Nenhum carrinho aberto encontrado para o cliente.");
+                    conn.rollback();
+                    return false;
+                }
             }
         }
 
-        // 2. Obter itens do carrinho
+        // Buscar itens do carrinho
+        List<CarrinhoProduto> itens = new ArrayList<>();
         String sqlItens = "SELECT cp.id_produto, cp.quantidade, cp.preco_unitario, p.nome " +
                           "FROM carrinho_produto cp JOIN produto p ON cp.id_produto = p.id " +
                           "WHERE cp.id_carrinho = ?";
-        List<CarrinhoProduto> itens = new ArrayList<>();
-
         try (PreparedStatement psItens = conn.prepareStatement(sqlItens)) {
             psItens.setInt(1, idCarrinho);
-            ResultSet rs = psItens.executeQuery();
+            try (ResultSet rs = psItens.executeQuery()) {
+                while (rs.next()) {
+                    int idProduto = rs.getInt("id_produto");
+                    int quantidade = rs.getInt("quantidade");
+                    double precoUnitario = rs.getDouble("preco_unitario");
+                    String nome = rs.getString("nome");
 
-            while (rs.next()) {
-                int idProduto = rs.getInt("id_produto");
-                int quantidade = rs.getInt("quantidade");
-                double precoUnitario = rs.getDouble("preco_unitario");
-                String nome = rs.getString("nome");
-
-                // Crie Produto e CarrinhoProduto conforme sua implementação
-                Produto produto = new Produto(idProduto, nome, precoUnitario, null, null, null); // ajuste conforme seu construtor
-                CarrinhoProduto cp = new CarrinhoProduto();
-                cp.setProduto(produto);
-                cp.setQuantidade(quantidade);
-                cp.setPrecoUnitario(precoUnitario);
-                itens.add(cp);
+                    Produto produto = new Produto(idProduto, nome, precoUnitario, null, null, null);
+                    CarrinhoProduto cp = new CarrinhoProduto();
+                    cp.setProduto(produto);
+                    cp.setQuantidade(quantidade);
+                    cp.setPrecoUnitario(precoUnitario);
+                    itens.add(cp);
+                }
             }
         }
 
@@ -111,7 +111,7 @@ public class PedidoService {
             return false;
         }
 
-        // 3. Verificar estoque e deduzir estoque
+        // Verificar estoque e deduzir
         String sqlEstoqueSelect = "SELECT quantidade FROM estoque WHERE id_produto = ? FOR UPDATE";
         String sqlEstoqueUpdate = "UPDATE estoque SET quantidade = quantidade - ? WHERE id_produto = ?";
 
@@ -123,47 +123,45 @@ public class PedidoService {
                 int qtdPedido = item.getQuantidade();
 
                 psEstoqueSelect.setInt(1, idProduto);
-                ResultSet rsEstoque = psEstoqueSelect.executeQuery();
-
-                if (rsEstoque.next()) {
-                    int qtdEstoque = rsEstoque.getInt("quantidade");
-                    if (qtdEstoque < qtdPedido) {
-                        System.out.println("Estoque insuficiente para o produto: " + item.getProduto().getNome());
+                try (ResultSet rsEstoque = psEstoqueSelect.executeQuery()) {
+                    if (rsEstoque.next()) {
+                        double qtdEstoque = rsEstoque.getDouble("quantidade");
+                        if (qtdEstoque < qtdPedido) {
+                            System.out.println("Estoque insuficiente para o produto: " + item.getProduto().getNome());
+                            conn.rollback();
+                            return false;
+                        }
+                    } else {
+                        System.out.println("Produto não encontrado no estoque: " + item.getProduto().getNome());
                         conn.rollback();
                         return false;
                     }
-                } else {
-                    System.out.println("Produto não encontrado no estoque: " + item.getProduto().getNome());
-                    conn.rollback();
-                    return false;
                 }
 
-                // Deduzir estoque
-                psEstoqueUpdate.setInt(1, qtdPedido);
+                psEstoqueUpdate.setDouble(1, qtdPedido);
                 psEstoqueUpdate.setInt(2, idProduto);
                 psEstoqueUpdate.executeUpdate();
             }
         }
 
-        // 4. Atualizar status do carrinho para FECHADO
+        // Atualizar status do carrinho para FECHADO
         String sqlAtualizaCarrinho = "UPDATE carrinho SET status = 'FECHADO', data_fechamento = CURRENT_DATE WHERE id_carrinho = ?";
         try (PreparedStatement psAtualiza = conn.prepareStatement(sqlAtualizaCarrinho)) {
             psAtualiza.setInt(1, idCarrinho);
             psAtualiza.executeUpdate();
         }
 
-        // 5. Criar pedido e salvar itens usando PedidoDAO (adaptar para usar a mesma conexão)
+        // Criar pedido e salvar itens com DAO usando mesma conexão
         double total = itens.stream().mapToDouble(i -> i.getQuantidade() * i.getPrecoUnitario()).sum();
         Pedido pedido = new Pedido(clienteId, LocalDate.now(), total, "FINALIZADO", true);
-        PedidoDAO pedidoDAO = new PedidoDAO();
 
-        // Aqui, adapte os métodos do PedidoDAO para aceitar conexão externa para transação
-        int idPedido = pedidoDAO.salvarPedido(pedido, conn);
+        int idPedido = pedidoDAO.salvarPedido(pedido, conn);   // método deve aceitar Connection
         if (idPedido == -1) {
             System.out.println("Falha ao salvar pedido.");
             conn.rollback();
             return false;
         }
+
         pedidoDAO.salvarItensPedido(idPedido, itens, conn);
 
         conn.commit();
@@ -199,5 +197,46 @@ public List<Pedido> listarTodosPedidos() {
     return pedidoDAO.listarTodosPedidos();
 }
 
+public List<CarrinhoProduto> buscarItensPedido(int idPedido) {
+    return pedidoDAO.buscarItensPedido(idPedido); // método que você precisa criar no DAO
+}
+
+public int criarPedidoRetornaId(Connection connection, int clienteId, List<CarrinhoProduto> itens) throws SQLException {
+    String sqlPedido = "INSERT INTO pedido (id_cliente, data_pedido, status) VALUES (?, NOW(), 'EM_ANDAMENTO')";
+    String sqlItem = "INSERT INTO pedido_item (id_pedido, id_produto, quantidade, preco_unitario) VALUES (?, ?, ?, ?)";
+
+    connection.setAutoCommit(false);
+    int pedidoId = -1;
+
+    try (PreparedStatement stmtPedido = connection.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
+        stmtPedido.setInt(1, clienteId);
+        int affectedRows = stmtPedido.executeUpdate();
+
+        if (affectedRows == 0) throw new SQLException("Falha ao criar pedido, nenhuma linha afetada.");
+
+        try (ResultSet generatedKeys = stmtPedido.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                pedidoId = generatedKeys.getInt(1);
+            } else {
+                throw new SQLException("Falha ao criar pedido, nenhum ID retornado.");
+            }
+        }
+    }
+
+    try (PreparedStatement stmtItem = connection.prepareStatement(sqlItem)) {
+        for (CarrinhoProduto item : itens) {
+            stmtItem.setInt(1, pedidoId);
+            stmtItem.setInt(2, item.getProduto().getId());
+            stmtItem.setInt(3, item.getQuantidade()); // se for int mesmo
+            stmtItem.setDouble(4, item.getPrecoUnitario());
+            stmtItem.addBatch();
+        }
+        stmtItem.executeBatch();
+    }
+
+    connection.commit();
+    connection.setAutoCommit(true);
+    return pedidoId;
+}
 
 }

@@ -109,8 +109,9 @@ private void voltarALoja() {
 @FXML
 private void verMeusPedidos() {
     Stage stage = (Stage) dadosPedidoContainer.getScene().getWindow();
-    SceneController.trocarCenaComController(stage, "/view/PedidosView.fxml", "Meus Pedidos", (MeusPedidosController controller) -> {
+    SceneController.trocarCenaComController(stage, "/view/MeusPedidosView.fxml", "Meus Pedidos", (MeusPedidosController controller) -> {
         controller.setDadosUsuario(cpf, nomeUsuario, clienteId);
+        controller.carregarPedidos();  // <<< chama para atualizar a lista
     });
 }
 

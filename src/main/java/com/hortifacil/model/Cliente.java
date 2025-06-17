@@ -9,6 +9,9 @@ public class Cliente extends Usuario {
     private String email;
     private String telefone;
 
+    private int idUsuario;
+    private int idCliente;
+
     public Cliente() {
         super();
     }
@@ -21,6 +24,17 @@ public class Cliente extends Usuario {
         this.email = email;
         this.telefone = telefone;
     }
+
+    // Classe Cliente.java
+
+    public int getIdUsuario() { return idUsuario;}
+
+    public void setIdUsuario(int idUsuario) { this.idUsuario = idUsuario; }
+
+    public int getIdCliente() { return idCliente;}
+
+    public void setIdCliente(int idCliente) {this.idCliente = idCliente;}
+
 
     // getters e setters
     public String getNome() { return nome; }

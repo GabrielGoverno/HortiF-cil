@@ -21,7 +21,7 @@ import java.sql.Connection;
 
 public class CadastroClienteController {
 
-    @FXML private TextField LoginField;
+    @FXML private TextField loginField;
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmaSenhaField;
     @FXML private TextField nomeField;
@@ -43,7 +43,7 @@ public void initialize() {
 
     ChangeListener<String> listener = (obs, oldVal, newVal) -> validarFormulario();
 
-    LoginField.textProperty().addListener(listener);
+    loginField.textProperty().addListener(listener);
     passwordField.textProperty().addListener(listener);
     confirmaSenhaField.textProperty().addListener(listener);
     nomeField.textProperty().addListener(listener);
@@ -156,7 +156,7 @@ private void aplicarMascaraTelefone() {
 
         setMensagemErro("");
 
-        boolean todosPreenchidos = !LoginField.getText().trim().isEmpty()
+        boolean todosPreenchidos = !loginField.getText().trim().isEmpty()
                 && !passwordField.getText().trim().isEmpty()
                 && !confirmaSenhaField.getText().trim().isEmpty()
                 && !nomeField.getText().trim().isEmpty()
@@ -206,7 +206,7 @@ private void handleCadastrar() {
     cadastrarButton.setDisable(true);
     try (Connection conn = DatabaseConnection.getConnection()) {
         Cliente cliente = new Cliente();
-        cliente.setLogin(LoginField.getText());
+        cliente.setLogin(loginField.getText());
         cliente.setSenha(passwordField.getText());
         cliente.setTipo(Enums.TipoUsuario.CLIENTE);
         cliente.setStatus(Enums.StatusUsuario.ATIVO);

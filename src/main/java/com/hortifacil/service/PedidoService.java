@@ -203,7 +203,7 @@ public List<CarrinhoProduto> buscarItensPedido(int idPedido) {
 
 public int criarPedidoRetornaId(Connection connection, int clienteId, List<CarrinhoProduto> itens) throws SQLException {
     String sqlPedido = "INSERT INTO pedido (id_cliente, data_pedido, status) VALUES (?, NOW(), 'EM_ANDAMENTO')";
-    String sqlItem = "INSERT INTO pedido_item (id_pedido, id_produto, quantidade, preco_unitario) VALUES (?, ?, ?, ?)";
+    String sqlItem = "INSERT INTO pedido_produto (id_pedido, id_produto, quantidade, preco_unitario) VALUES (?, ?, ?, ?)";
 
     connection.setAutoCommit(false);
     int pedidoId = -1;

@@ -1,5 +1,6 @@
 package com.hortifacil.controller;
 
+import com.hortifacil.dao.PedidoDAO;
 import com.hortifacil.model.CarrinhoProduto;
 import com.hortifacil.model.Pedido;
 import com.hortifacil.service.PedidoService;
@@ -30,6 +31,8 @@ public class MeusPedidosController {
 
     @FXML
     private Button btnVoltar;
+
+    private PedidoDAO pedidoDAO = new PedidoDAO();
 
     private PedidoService pedidoService;
     private int clienteId;
@@ -79,11 +82,6 @@ public class MeusPedidosController {
         });
     }
 
-    private void carregarPedidos() {
-        List<Pedido> pedidos = pedidoService.listarPedidosPorCliente(clienteId);
-        tablePedidos.setItems(FXCollections.observableArrayList(pedidos));
-    }
-
     private void mostrarDetalhesPedido(Pedido pedido) {
         List<CarrinhoProduto> itens = pedidoService.buscarItensPedido(pedido.getIdPedido());
 
@@ -110,5 +108,11 @@ private void handleVoltar() {
         controller -> controller.setDadosUsuario(cpf, nomeUsuario, clienteId)
     );
 }
+
+public void carregarPedidos() {
+    List<Pedido> pedidos = pedidoDAO.listarPedidosPorCliente(clienteId);
+    tablePedidos.setItems(FXCollections.observableArrayList(pedidos));
+}
+
 
 }

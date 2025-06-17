@@ -210,10 +210,10 @@ public boolean clienteExiste(int clienteId) throws SQLException {
  @Override
 public List<CarrinhoProduto> listarPorPedido(int pedidoId) throws SQLException {
     String sql = "SELECT pi.quantidade, pi.preco_unitario, p.id_produto, p.nome, p.id_unidade, u.nome as unidade_nome " +
-                 "FROM pedido_item pi " +
-                 "JOIN produto p ON pi.id_produto = p.id_produto " +
-                 "JOIN unidade_medida u ON p.id_unidade = u.id_unidade " +
-                 "WHERE pi.id_pedido = ?";
+             "FROM pedido_produto pi " +
+             "JOIN produto p ON pi.id_produto = p.id_produto " +
+             "JOIN unidade_medida u ON p.id_unidade = u.id_unidade " +
+             "WHERE pi.id_pedido = ?";
 
     List<CarrinhoProduto> itens = new ArrayList<>();
 

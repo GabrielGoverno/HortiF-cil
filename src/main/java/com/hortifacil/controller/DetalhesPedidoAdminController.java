@@ -97,7 +97,7 @@ public void setPedido(Pedido pedido) {
         }
     }
 
-    @FXML
+ @FXML
 private void handleVoltar() {
     Stage stage = (Stage) btnVoltar.getScene().getWindow();
     SceneController.trocarCena(stage, "/view/ListaPedidosView.fxml", "Lista de Pedidos");

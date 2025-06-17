@@ -274,6 +274,7 @@ private void finalizarPedido() {
 
         Stage stage = (Stage) btnFinalizar.getScene().getWindow();
         SceneController.trocarCenaComController(stage, "/view/PedidoFinalizadoView.fxml", "Pedido Finalizado", (PedidoFinalizadoController controller) -> {
+            controller.setDadosUsuario(cpf, nomeUsuario, clienteId);
             controller.setDadosPedido(pedidoIdCriado, dataPedido, itensPedido, total);
         });
 

@@ -19,10 +19,10 @@
 
     <TableView fx:id="tableItensPedido" prefHeight="400" prefWidth="760">
         <columns>
-            <TableColumn fx:id="colProduto" text="Produto" prefWidth="200"/>
+            <TableColumn fx:id="colProduto" text="Produto" prefWidth="240"/>
             <TableColumn fx:id="colQuantidade" text="Quantidade" prefWidth="150"/>
-            <TableColumn fx:id="colPrecoUnitario" text="Preço Unitário" prefWidth="150"/>
-            <TableColumn fx:id="colSubtotal" text="Subtotal" prefWidth="150"/>
+            <TableColumn fx:id="colPrecoUnitario" text="Preço Unitário" prefWidth="170"/>
+            <TableColumn fx:id="colSubtotal" text="Subtotal" prefWidth="185"/>
         </columns>
     </TableView>
 

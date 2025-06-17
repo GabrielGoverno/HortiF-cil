@@ -79,13 +79,14 @@ public class ClienteDAO {
 
     }
 
-   public int inserirClienteCompleto(Cliente cliente) throws SQLException {
+public int inserirClienteCompleto(Cliente cliente) throws SQLException {
     String sqlUsuario = "INSERT INTO usuario (Login, senha, tipo, status) VALUES (?, ?, ?, ?)";
     String sqlCliente = "INSERT INTO cliente (id_usuario, nome, cpf, email, telefone) VALUES (?, ?, ?, ?, ?)";
 
     try {
         conn.setAutoCommit(false);
 
+        // Inserir na tabela usuario
         try (PreparedStatement stmtUser = conn.prepareStatement(sqlUsuario, Statement.RETURN_GENERATED_KEYS)) {
             stmtUser.setString(1, cliente.getLogin());
             stmtUser.setString(2, BCrypt.hashpw(cliente.getSenha(), BCrypt.gensalt()));
@@ -100,7 +101,7 @@ public class ClienteDAO {
 
             try (ResultSet rs = stmtUser.getGeneratedKeys()) {
                 if (rs.next()) {
-                    cliente.setId(rs.getInt(1)); // id_usuario
+                    cliente.setIdUsuario(rs.getInt(1)); // ← armazena o ID do usuário separadamente
                 } else {
                     conn.rollback();
                     return -1;
@@ -108,8 +109,9 @@ public class ClienteDAO {
             }
         }
 
+        // Inserir na tabela cliente com o id_usuario obtido acima
         try (PreparedStatement stmtCliente = conn.prepareStatement(sqlCliente, Statement.RETURN_GENERATED_KEYS)) {
-            stmtCliente.setInt(1, cliente.getId());
+            stmtCliente.setInt(1, cliente.getIdUsuario());
             stmtCliente.setString(2, cliente.getNome());
             stmtCliente.setString(3, cliente.getCpf());
             stmtCliente.setString(4, cliente.getEmail());
@@ -124,14 +126,16 @@ public class ClienteDAO {
             try (ResultSet rs = stmtCliente.getGeneratedKeys()) {
                 if (rs.next()) {
                     int idCliente = rs.getInt(1);
-                    conn.commit();  // commit antes de retornar
-                    return idCliente; // retorna o id_cliente
+                    cliente.setIdCliente(idCliente); // ← armazena o ID do cliente corretamente
+                    conn.commit();
+                    return idCliente;
                 }
             }
         }
 
         conn.rollback();
-        return -1; // falhou ao obter id_cliente
+        return -1;
+
     } catch (SQLException e) {
         conn.rollback();
         throw e;
@@ -195,7 +199,7 @@ public Cliente buscarPorIdCliente(int idCliente) {
         ResultSet rs = stmt.executeQuery();
         if (rs.next()) {
             return String.format(
-                "%s, %s, %s - %s/%s %s",
+                "%s, %s - %s %s",
                 rs.getString("rua"),
                 rs.getString("numero"),
                 rs.getString("bairro"),
